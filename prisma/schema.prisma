@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Domain models for monweb
+
+model Client {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  company      String?
+  phone        String?
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  appointments Appointment[]
+  subscriptions Subscription[]
+}
+
+model Appointment {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // If the user books before becoming a client, we still capture info
+  name        String
+  email       String
+  phone       String?
+  message     String?
+
+  dateTime    DateTime
+  status      AppointmentStatus @default(PENDING)
+
+  clientId    String?
+  client      Client?      @relation(fields: [clientId], references: [id])
+}
+
+model Subscription {
+  id          String          @id @default(cuid())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  plan        Plan            @default(YEARLY)
+  priceCents  Int             // store money in cents
+  startDate   DateTime
+  endDate     DateTime
+  status      SubscriptionStatus @default(ACTIVE)
+
+  clientId    String
+  client      Client          @relation(fields: [clientId], references: [id])
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum Plan {
+  YEARLY
+}
